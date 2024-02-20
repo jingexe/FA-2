@@ -1,0 +1,75 @@
+---
+title: "FA#2"
+output: html_document
+date: "2024-02-20"
+---
+1. Use pivot_longer to reshape the dataset into one that has two columns, the first giving the protein identity and the second giving the amount of the protein in one of the cells. The dataset you get should have 1750000 rows (50000 cells in the original dataset times 35
+proteins).
+2. Use group_by and summarise to find the median protein level and the median absolute deviation of the protein level for each marker. (Use the R functions median and mad).
+3. Make a plot with mad on the x-axis and median on the y-axis. This is known as a spreadlocation (s-l) plot. What does it tell you about the relationship betwen the median and the mad?
+```{r}
+library(tidyverse)
+
+data <- read.csv("D:/desktop/cytof_one_experiment.csv")
+
+data_long <- pivot_longer(data, cols = everything(), names_to = "Protein", values_to = "Amount")
+
+cat("Number of rows in reshaped dataset:", nrow(data_long), "\n")
+
+protein_summary <- data_long %>%
+  group_by(Protein) %>%
+  summarise(
+    Median = median(Amount, na.rm = TRUE),
+    MAD = mad(Amount, constant = 1, na.rm = TRUE)
+  )
+
+print(protein_summary)
+
+library(ggplot2)
+
+ggplot(protein_summary, aes(x = MAD, y = Median)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Median Absolute Deviation (MAD)", y = "Median", title = "Spread-Location (S-L) Plot") +
+  geom_smooth(method = "lm", se = FALSE, color = "blue")
+
+```
+
+The spread-location (s-l) plot shows the relationship between the median absolute deviation (MAD) on the x-axis and the median protein level on the y-axis for each protein. This plot helps us to understand the variability (spread) of protein levels across cells in relation to their central tendency (median).
+
+Proteins with higher MAD values have greater variability in their levels across cells.
+The distribution of points across the plot indicates that proteins with lower median levels tend to have lower variability, whereas proteins with higher median levels can have a wide range of variability.
+This plot is useful for identifying proteins with both high variability and high or low median levels, which could be of particular interest in biological studies for understanding cell-to-cell variability in protein expression. 
+
+
+4. Using either pivot_longer on its own or pivot_longer in combination with separate, reshape the dataset so that it has columns for country, event, year, and score.
+
+```{r}
+options(repos = c(CRAN = "https://mirrors.tuna.tsinghua.edu.cn/CRAN/"))
+
+install.packages("remotes")
+
+# Use remotes to install dcldata
+remotes::install_github("dcl-docs/dcldata")
+
+```
+```{r}
+# Load the dcldata package
+library(dcldata)
+# Load the example_gymnastics_2 dataset
+data(example_gymnastics_2)
+# Reshape the dataset
+library(tidyr)
+library(dplyr)
+
+reshaped_data <- example_gymnastics_2 %>%
+  pivot_longer(
+    -country,
+    names_to = "event_year",
+    values_to = "score"
+  ) %>%
+  separate(event_year, into = c("event", "year"), sep = "_")
+
+# Display the first few rows of the reshaped dataset
+head(reshaped_data)
+```
